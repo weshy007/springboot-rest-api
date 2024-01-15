@@ -9,13 +9,13 @@ import com.weshy.springrestapi.models.response.LoginResponse;
 import com.weshy.springrestapi.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.java.Log;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,16 +26,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RequestMapping("/rest/auth")
 public class AuthController {
     private final AuthenticationManager authenticationManager;
-
-
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserService userService;
-
     private JwtUtil jwtUtil;
-    public AuthController(AuthenticationManager authenticationManager, UserService userService, JwtUtil jwtUtil) {
+
+    public AuthController(AuthenticationManager authenticationManager, BCryptPasswordEncoder bCryptPasswordEncoder, UserService userService, JwtUtil jwtUtil) {
         this.authenticationManager = authenticationManager;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.userService = userService;
         this.jwtUtil = jwtUtil;
-
     }
 
     @ResponseBody
@@ -74,9 +73,14 @@ public class AuthController {
             user.setPassword(registrationRequest.getPassword());
             user.setRole("USER");
 
+            String password = registrationRequest.getPassword();
+            String encodedPassword = bCryptPasswordEncoder.encode(password);
+            System.out.println("Encoded password: " + encodedPassword);
+            user.setPassword(encodedPassword);
+
             User newUser = userService.createUser(user);
-            if (newUser == null) {
-                ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, "Error creating new user");
+            if(newUser == null){
+                ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST,"Error creating new user");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
             }
 
@@ -85,9 +89,10 @@ public class AuthController {
             LoginResponse loginResponse = new LoginResponse(newUser.getEmail(), token);
 
             return ResponseEntity.ok(loginResponse);
-        } catch (Exception e) {
+        } catch (Exception e){
             ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
+
     }
 }
