@@ -1,9 +1,6 @@
 package com.weshy.springrestapi.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,7 +15,8 @@ import java.util.Date;
 public class User {
     @Id
     @Column(name = "ID")
-    private long id;
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private Long id;
     @Column(name = "EMAIL")
     private String email;
     @Column(name = "PASSWORD")
@@ -44,11 +42,11 @@ public class User {
         this.email = email;
         this.password = password;
     }
-
-    public User(String email, String password, String firstName, String lastName) {
+    public User(String email, String password, String firstName, String lastName, String role) {
         this.email = email;
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.role = role;
     }
 }
