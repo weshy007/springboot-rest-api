@@ -2,6 +2,7 @@ package com.weshy.springrestapi.controllers;
 
 import com.weshy.springrestapi.models.Story;
 import com.weshy.springrestapi.models.User;
+import com.weshy.springrestapi.models.response.ErrorResponse;
 import com.weshy.springrestapi.services.StoryService;
 import com.weshy.springrestapi.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
@@ -19,8 +19,9 @@ import java.util.List;
 @Controller
 @RequestMapping("/rest/story")
 public class StoryController {
-    public final StoryService storyService;
-    public final UserService userService;
+
+    private final StoryService storyService;
+    private final UserService userService;
 
     public StoryController(StoryService storyService, UserService userService) {
         this.storyService = storyService;
@@ -29,27 +30,32 @@ public class StoryController {
 
     @ResponseBody
     @RequestMapping(value = "/get-all",method = RequestMethod.GET)
-    public ResponseEntity getAllStories(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity getAllStories(HttpServletRequest request, HttpServletResponse response){
+
         try {
             List<Story> storyList = storyService.getAllStories();
+
             return ResponseEntity.ok(storyList);
+
         } catch (Exception e){
             ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
-    }
 
+    }
     @ResponseBody
     @RequestMapping(value = "/create-story",method = RequestMethod.POST)
-    public ResponseEntity createStory( HttpServletRequest request, HttpServletResponse response, @RequestBody Story story) {
+    public ResponseEntity createStory(HttpServletRequest request, HttpServletResponse response, @RequestBody Story story){
+
         try {
             String userEmail = request.getUserPrincipal().getName();
             User user = userService.getUserByEmail(userEmail);
-            if (user == null) {
-                ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, "Invalid User");
+            if(user == null){
+                ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, "Invalid user");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-                }
+            }
             Long userId = user.getId();
+
             story.setUserId(userId);
 
             Date date = new Date();
@@ -59,10 +65,12 @@ public class StoryController {
             Story newStory = storyService.createStory(story);
 
             return ResponseEntity.ok(newStory);
-        } catch (Exception e) {
+
+        } catch (Exception e){
             ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
+
     }
 
     @ResponseBody
@@ -101,6 +109,5 @@ public class StoryController {
         }
 
     }
-
 
 }
